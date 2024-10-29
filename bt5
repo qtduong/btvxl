@@ -1,0 +1,76 @@
+Short int:
+.model small
+.stack 100h
+.data
+    a dw 2       ; Khai báo a là short int với giá trị ban đầu là 2
+    b dw 4       ; Khai báo b là short int với giá trị ban đầu là 4
+    c dw ?       ; Khai báo c là short int lưu kết quả
+.code
+main proc
+    mov ax, a        ; Đưa giá trị của a vào AX
+    add ax, b        ; AX = a + b
+    mov c, ax        ; Lưu kết quả a + b vào c
+    
+    mov ax, a        ; Đưa lại giá trị của a vào AX
+    mov bx, b        ; Đưa giá trị của b vào BX
+    mul bx           ; AX = a * b (lưu ý: 8086 lưu kết quả nhân vào DX:AX)
+    mov c, ax        ; Lưu phần thấp của kết quả vào c (chỉ lưu 2 byte)
+main endp
+end main
+Long int:
+.model small
+.stack 100h
+.data
+    a dw 2, 0      ; Khai báo a là long int 4 byte, khởi tạo với 2
+    b dw 4, 0      ; Khai báo b là long int 4 byte, khởi tạo với 4
+    c dw 0, 0      ; Khai báo c là long int 4 byte để lưu kết quả
+.code
+main proc
+    ; Tính c = a + b
+    mov ax, a       ; AX = phần thấp của a
+    add ax, b       ; AX = a_low + b_low
+    mov c, ax       ; Lưu phần thấp của c
+    mov ax, a+2     ; AX = phần cao của a
+    adc ax, b+2     ; AX = a_high + b_high + CF (carry từ phép cộng trước đó)
+    mov c+2, ax     ; Lưu phần cao của c
+
+    ; Tính c = a * b
+    mov ax, a       ; AX = phần thấp của a
+    mul b           ; DX:AX = a_low * b_low
+    mov c, ax       ; Lưu phần thấp của c
+    mov c+2, dx     ; Lưu phần cao của c (kết quả 32-bit)
+main endp
+end main
+Long long int
+.model small
+.stack 100h
+.data
+    a dq 2           ; Khai báo a là long long int 8 byte, khởi tạo với 2
+    b dq 4           ; Khai báo b là long long int 8 byte, khởi tạo với 4
+    c dq 0           ; Khai báo c là long long int 8 byte để lưu kết quả
+.code
+main proc
+    ; Tính c = a + b (cộng từng phần 16-bit và xét carry)
+    mov ax, word ptr a         ; AX = a phần thấp nhất
+    add ax, word ptr b         ; AX = a_low + b_low
+    mov word ptr c, ax         ; Lưu phần thấp nhất của c
+    mov ax, word ptr a+2       ; AX = phần thứ hai của a
+    adc ax, word ptr b+2       ; Cộng với b, cộng carry từ phép cộng trước đó
+    mov word ptr c+2, ax       ; Lưu phần thứ hai của c
+    mov ax, word ptr a+4       ; AX = phần thứ ba của a
+    adc ax, word ptr b+4       ; Cộng với b phần thứ ba
+    mov word ptr c+4, ax       ; Lưu phần thứ ba của c
+    mov ax, word ptr a+6       ; AX = phần cao nhất của a
+    adc ax, word ptr b+6       ; Cộng với b phần cao nhất
+    mov word ptr c+6, ax       ; Lưu phần cao nhất của c
+
+    ; Tính c = a * b: Nhân từng cặp 16-bit (chỉ thực hiện một phần)
+    ; (Phép nhân đầy đủ cho 64-bit yêu cầu nhân từng cặp phần và cộng dồn)
+    ; Ví dụ mô phỏng phép nhân cơ bản (không tính carry nhiều cặp do hạn chế)
+
+    mov ax, word ptr a         ; AX = phần thấp nhất của a
+    mul word ptr b             ; DX:AX = a_low * b_low
+    mov word ptr c, ax         ; Lưu phần thấp nhất của c
+    mov word ptr c+2, dx       ; Lưu phần tiếp theo của c (một phần của kết quả 64-bit)
+main endp
+end main
